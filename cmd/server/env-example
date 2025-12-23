@@ -1,0 +1,18 @@
+# --- Конфигурация gRPC сервера ---
+GRPC_SERVER_ADDR=:50051
+PEPPER=5zA9pgA0y9yDAvzREgMIXx3AJ7SsXdct/QkSn10opjM=
+
+# --- Конфигурация PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=mihailtur
+DB_PASSWORD=
+DB_NAME=postgres
+DB_SSL_MODE=disable
+
+# --- Конфигурация MinIO ---
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET=secrets
+MINIO_USE_SSL=false

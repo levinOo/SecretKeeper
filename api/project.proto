@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package project;
+
+option go_package = "secretKeeper/pkg/api;api"; 
+
+enum SecretType {
+  SECRET_TYPE_UNKNOWN = 0; // Всегда начинай с 0 и UNKNOWN
+  SECRET_TYPE_CREDENTIALS = 1; 
+  SECRET_TYPE_CARD = 2;       
+  SECRET_TYPE_TEXT = 3;        
+  SECRET_TYPE_FILE = 4;        
+}
+
+message CredentialsPayload {
+  string login = 1;
+  string password = 2;
+  string url = 3;
+  string description = 4;
+}
+
+message CardPayload {
+  string number = 1;
+  string holder = 2;
+  string expiry = 3; // MM/YY
+  string cvv = 4;
+}
+
+message TextPayload {
+  string text = 1;      // Сам текст заметки
+  string description = 2;
+}
+
+message FilePayload {
+  string filename = 1;
+  string comment = 2;   // "Не открывать до 2025 года"
+}
+
+service ProjectService {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+
+    // Secrets Management
+    // Client Streaming: Метаданные + Поток байт
+    rpc CreateSecret(stream CreateSecretRequest) returns (CreateSecretResponse);
+    
+    rpc DeleteSecret(DeleteRequest) returns (DeleteResponse);
+    rpc GetSecret(GetRequest) returns (GetResponse);
+    rpc GetSecretList(GetListRequest) returns (GetListResponse);
+}
+
+message RegisterRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message RegisterResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+}
+
+
+message CreateSecretRequest {
+    oneof data {
+        SecretMetadata metadata = 1; 
+        bytes chunk_data = 2;        
+    }
+}
+
+message SecretMetadata {
+    string name = 1;                    
+    SecretType type = 2;                
+    map<string, string> public_meta = 3; 
+}
+
+message CreateSecretResponse {
+    string id = 1;          
+    string status = 2;      
+}
+
+// Delete
+message DeleteRequest {
+    string id = 1;
+}
+
+message DeleteResponse {
+    string status = 1;
+}
+
+// Get One
+message GetRequest {
+    string id = 1;
+}
+
+message GetResponse {
+    string id = 1;
+    SecretMetadata metadata = 2;
+    bytes encrypted_data = 3; // Зашифрованный блоб целиком (для маленьких файлов)
+    // Если файлы большие, GetSecret тоже стоит делать stream (Server Streaming),
+    // но для начала можно и так.
+}
+
+message GetListRequest {
+    int32 limit = 1;  // Пагинация
+    int32 offset = 2;
+}
+
+message GetListResponse {
+    repeated SecretItem secrets = 1;
+    int32 total_count = 2;
+}
+
+message SecretItem {
+    string id = 1;
+    SecretMetadata metadata = 2; // Тут удобно показать Name, Type и PublicMeta
+    // Самих данных тут НЕТ (безопасность + скорость)
+}
