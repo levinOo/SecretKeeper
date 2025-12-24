@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -48,7 +47,7 @@ func NewDBConnection(cfg *config.PostgreConfig) (*DB, error) {
 }
 
 // Функция закрытия подключения к базе данных
-func (db *DB) Close() error {
+func (db *DB) Disconnect() error {
 	return db.DB.Close()
 }
 
@@ -63,34 +62,8 @@ func (db *DB) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// Функция регистрации нового пользователя в базе данных
-func (db *DB) RegisterUser(ctx context.Context, username, passwordHash string) (string, error) {
-	var id string
-
-	query := `
-		INSERT INTO users (username, password_hash) 
-		VALUES ($1, $2)
-		RETURNING id
-	`
-
-	err := db.DB.QueryRowContext(ctx, query, username, passwordHash).Scan(&id)
-	if err != nil {
-		var pgErr *pgconn.PgError
-
-		if errors.Is(err, pgErr) {
-			if pgErr.Code == "23505" {
-				return "", ErrUserAlreadyExists
-			}
-		}
-
-		return "", fmt.Errorf("failed to register user: %w", err)
-	}
-
-	return id, nil
-}
-
 // Функция получения ID и хеша пароля пользователя по его имени (username)
-func (db *DB) GetUserByUsername(ctx context.Context, username string) (string, string, error) {
+func (db *DB) LoginUser(ctx context.Context, username string) (string, string, error) {
 	var id string
 	var hashedPassword string
 
@@ -145,15 +118,4 @@ func (db *DB) SaveSecret(ctx context.Context, userID, secretID string, secretTyp
 	}
 
 	return nil
-}
-
-// Функция проверки существования секрета по его ID
-func (db *DB) CheckSecretExists(secretID string) (bool, error) {
-	var exists bool
-	query := `SELECT EXISTS(SELECT 1 FROM secrets WHERE id = $1)`
-	err := db.DB.QueryRowContext(context.Background(), query, secretID).Scan(&exists)
-	if err != nil {
-		return false, fmt.Errorf("failed to check secret existence: %w", err)
-	}
-	return exists, nil
 }

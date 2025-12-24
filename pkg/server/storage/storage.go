@@ -17,25 +17,21 @@ type MinioStorage struct {
 }
 
 // Функция создания нового экземпляра MinIO хранилища
-func NewMinioStorage(cfg *config.StorageConfig) (*MinioStorage, error) {
-	minioClient, err := minio.New(cfg.MinIOEndpoint, &minio.Options{
-		Creds:        credentials.NewStaticV4(cfg.MinIOAccessKey, cfg.MinIOSecretKey, ""),
-		Secure:       cfg.MinIOUseSSL,
-		Transport:    nil,
-		Trace:        nil,
-		Region:       "us-east-1",
-		BucketLookup: minio.BucketLookupAuto,
+func NewStorage(cfg *config.StorageConfig) (*MinioStorage, error) {
+	minioClient, err := minio.New(cfg.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
+		Secure: cfg.UseSSL,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	exist, err := minioClient.BucketExists(context.Background(), cfg.MinIOBucket)
+	exist, err := minioClient.BucketExists(context.Background(), cfg.Bucket)
 	if err != nil {
 		return nil, err
 	}
 	if !exist {
-		err := minioClient.MakeBucket(context.Background(), cfg.MinIOBucket, minio.MakeBucketOptions{})
+		err := minioClient.MakeBucket(context.Background(), cfg.Bucket, minio.MakeBucketOptions{})
 		if err != nil {
 			return nil, err
 		}
