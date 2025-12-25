@@ -22,7 +22,7 @@ func (h *AuthHandler) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 	username := req.GetUsername()
 	password := req.GetPassword()
 
-	token, err := h.service.Register(ctx, username, password) // access and refresh tokens
+	token, err := h.service.CreateUser(ctx, username, password) // access and refresh tokens
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -31,7 +31,7 @@ func (h *AuthHandler) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 }
 
 func (a *AuthHandler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	token, err := a.service.Login(ctx, req.Username, req.Password)
+	id, token, err := a.service.LoginUser(ctx, req.Username, req.Password) // access and refresh tokens
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}

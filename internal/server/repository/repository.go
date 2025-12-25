@@ -3,28 +3,29 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"io"
+	"secretKeeper/internal/server/repository/minio"
+	"secretKeeper/internal/server/repository/postgres"
+	"secretKeeper/pkg/server/storage"
 )
 
-type Users interface {
-	RegisterUser(ctx context.Context, username, passwordHash string) (string, error)
+type Authorization interface {
+	CreateUser(ctx context.Context, username, hashedPassword string) (string, error)
 	LoginUser(ctx context.Context, username string) (string, string, error)
-	AddToken(ctx context.Context, userID, refreshToken string) error
 }
 
-type Secrets interface {
-	CreateSecret(ctx context.Context, userID, secretData string) (string, error)
-	GetSecret(ctx context.Context, userID, secretID string) (string, error)
-	DeleteSecret(ctx context.Context, userID, secretID string) error
+type FileStorage interface {
+	UploadFile(ctx context.Context, objectName string, reader io.Reader, objectSize int64, contentType string) error
 }
 
 type Repositories struct {
-	Users   Users
-	Secrets Secrets
+	Authorization
+	FileStorage
 }
 
-func NewRepositories(db *sql.DB) *Repositories {
+func NewRepositories(db *sql.DB, minioStorage *storage.MinioStorage) *Repositories {
 	return &Repositories{
-		Users:   NewUserRepository(db),
-		Secrets: NewSecretRepo(db),
+		Authorization: postgres.NewAuthRepo(db),
+		FileStorage:   minio.NewUserStorage(minioStorage),
 	}
 }
