@@ -48,7 +48,7 @@ func (m *MinioStorage) UploadFile(ctx context.Context, objectName string, reader
 		ContentType: contentType,
 	})
 	if err != nil {
-		return fmt.Errorf("minio upload error: %w", err)
+		return fmt.Errorf("ошибка загрузки minio: %w", err)
 	}
 	return nil
 }

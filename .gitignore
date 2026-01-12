@@ -1,1 +1,67 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/tmp/
+secretkeeper-client
+secretkeeper-server
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Environment files
 .env
+*.env
+!env-example
+cmd/client/.env
+cmd/server/.env
+
+# Certificates and keys
+/certs/
+*.key
+*.crt
+*.pem
+ca.crt
+server.crt
+server.key
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Cache directories
+.cache/
+*.cache
+
+# Temporary files
+*.tmp
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Build artifacts
+dist/
+build/
+bin/
+
+# Docker volumes
+data/
+postgres_data/

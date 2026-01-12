@@ -1,31 +1,56 @@
 package config
 
 import (
-	"github.com/caarlos0/env"
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
-// Структура конфигурации клиента
-type Config struct {
-	GRPC GRPCConfig
+// ClientConfig конфигурация клиента
+type ClientConfig struct {
+	ServerAddr string // Адрес gRPC сервера
+	CertPath   string // Путь к TLS сертификату
 }
 
-// Структура конфигурации gRPC подключения
-type GRPCConfig struct {
-	Addr string `env:"GRPC_SERVER_ADDR" envDefault:":50051"`
-}
-
-// Функция загрузки конфигурации клиента
-func LoadConfig() (*Config, error) {
-	if err := godotenv.Load(); err != nil {
-		return nil, err
+func LoadConfig(v *viper.Viper) (*ClientConfig, error) {
+	path := os.Getenv("CONFIG_PATH")
+	if path == "" {
+		return nil, fmt.Errorf("CONFIG_PATH is not set")
 	}
 
-	cfg := &Config{}
+	_ = godotenv.Load(path)
 
-	if err := env.Parse(cfg); err != nil {
-		return nil, err
+	v.SetEnvPrefix("SK")
+	v.AutomaticEnv()
+
+	serverAddr := v.GetString("CLIENT_SERVER_ADDR")
+	if serverAddr == "" {
+		serverAddr = os.Getenv("SK_CLIENT_SERVER_ADDR")
 	}
 
-	return cfg, nil
+	certPath := v.GetString("CLIENT_CERT_PATH")
+	if certPath == "" {
+		certPath = os.Getenv("SK_CLIENT_CERT_PATH")
+	}
+
+	// Если сертификат задан относительным путём, делаем его абсолютным от корня проекта
+	if certPath != "" && !filepath.IsAbs(certPath) && !filepath.IsAbs(certPath) {
+		// Проверяем, существует ли файл как есть
+		if _, err := os.Stat(certPath); err != nil {
+			// Если не существует, ищем от корня проекта
+			workDir, _ := os.Getwd()
+			potentialPath := filepath.Join(workDir, certPath)
+			if _, err := os.Stat(potentialPath); err == nil {
+				certPath = potentialPath
+			}
+		}
+	}
+
+	return &ClientConfig{
+		ServerAddr: serverAddr,
+		CertPath:   certPath,
+	}, nil
 }

@@ -1,10 +1,8 @@
 package main
 
-import (
-	"secretKeeper/internal/server"
-)
+import "secretKeeper/internal/server/app"
 
-// Функция точки входа в приложение сервера
+// Функция точки для запуска сервера
 func main() {
-	server.Run()
+	app.Run()
 }

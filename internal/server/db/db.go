@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"context"
@@ -13,13 +13,9 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-const (
-	maxTimeout = 5 * time.Second // timeout подключения для бд
-)
-
 var (
-	ErrUserAlreadyExists = errors.New("user already exists")
-	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("пользователь уже существует")
+	ErrUserNotFound      = errors.New("пользователь не найден")
 )
 
 // Структура обертки над подключением к БД
@@ -36,7 +32,7 @@ func NewDBConnection(cfg *config.PostgreConfig) (*DB, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), maxTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.ContextTimeout)
 	defer cancel()
 
 	if err := db.PingContext(ctx); err != nil {
@@ -57,7 +53,7 @@ func (db *DB) HealthCheck(ctx context.Context) error {
 	defer cancel()
 
 	if err := db.DB.PingContext(ctx); err != nil {
-		return fmt.Errorf("db ping failed: %w", err)
+		return fmt.Errorf("пинг базы данных не удался: %w", err)
 	}
 	return nil
 }
@@ -78,7 +74,7 @@ func (db *DB) LoginUser(ctx context.Context, username string) (string, string, e
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", "", ErrUserNotFound
 		}
-		return "", "", fmt.Errorf("failed to get user by username: %w", err)
+		return "", "", fmt.Errorf("не удалось получить пользователя по имени: %w", err)
 	}
 
 	return id, hashedPassword, nil
@@ -94,7 +90,7 @@ func (db *DB) AddToken(ctx context.Context, userID, refreshToken string) error {
 
 	_, err := db.DB.ExecContext(ctx, query, userID, refreshToken)
 	if err != nil {
-		return fmt.Errorf("failed to update refresh token: %w", err)
+		return fmt.Errorf("не удалось обновить токен обновления: %w", err)
 	}
 
 	return nil
@@ -104,7 +100,7 @@ func (db *DB) AddToken(ctx context.Context, userID, refreshToken string) error {
 func (db *DB) SaveSecret(ctx context.Context, userID, secretID string, secretType int, title string, meta map[string]string, storagePath string) error {
 	metaJSON, err := json.Marshal(meta)
 	if err != nil {
-		return fmt.Errorf("failed to marshal meta: %w", err)
+		return fmt.Errorf("не удалось маршалировать метаданные: %w", err)
 	}
 
 	query := `
@@ -114,7 +110,7 @@ func (db *DB) SaveSecret(ctx context.Context, userID, secretID string, secretTyp
 
 	_, err = db.DB.ExecContext(ctx, query, secretID, userID, secretType, title, metaJSON, storagePath)
 	if err != nil {
-		return fmt.Errorf("failed to save secret: %w", err)
+		return fmt.Errorf("не удалось сохранить секрет: %w", err)
 	}
 
 	return nil
