@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package project;
+
+option go_package = "secretKeeper/pkg/api;api"; 
+
+service AuthService {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
+}
+
+service SecretService {
+    rpc CreateSecret(stream CreateSecretRequest) returns (CreateSecretResponse);
+    rpc GetSecret(GetSecretRequest) returns (stream GetSecretResponse);
+    rpc ListSecrets(ListSecretsRequest) returns (ListSecretsResponse);
+    rpc DeleteSecret(DeleteSecretRequest) returns (DeleteSecretResponse);
+}
+
+// --- Auth Messages ---
+message RegisterRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message RegisterResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    string status = 3;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    string status = 3;
+}
+
+// --- Secret Messages ---
+message SecretMetadata {
+    string id = 1;
+    string type = 2;
+    map <string, string> extra = 3;
+}
+
+message CreateSecretRequest {
+    oneof data {
+        SecretMetadata meta = 1; 
+        bytes chunk_data = 2;
+    }
+}
+
+message CreateSecretResponse {
+    string id = 1;
+    string status = 2;
+}
+
+message GetSecretRequest {
+    string id = 1;
+}
+
+message GetSecretResponse {
+    SecretMetadata meta = 1;
+    bytes chunk_data = 2;
+    string status = 3;
+}
+
+message ListSecretsRequest {}
+
+message ListSecretsResponse {
+    repeated SecretMetadata secrets = 1;
+    string status = 2;
+}
+
+message DeleteSecretRequest {
+    string id = 1; 
+}
+
+message DeleteSecretResponse {
+    string status = 1;
+}

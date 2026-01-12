@@ -1,0 +1,5 @@
+# Порт сервера
+SK_CLIENT_SERVER_PORT=
+
+# Путь к сертификату
+SK_CLIENT_CERT_PATH=

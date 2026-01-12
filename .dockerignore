@@ -1,0 +1,51 @@
+# Git files
+.git/
+.gitignore
+
+# Environment files
+.env
+*.env
+.env.example
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary and cache files
+*.tmp
+*.log
+.cache/
+
+# Test files
+*_test.go
+*.test
+
+# Documentation
+README.md
+*.md
+
+# CI/CD
+.github/
+
+# Development tools
+Makefile
+
+# Local development files
+docker-compose.yaml
+docker-compose.yml
+
+# Build artifacts (keep only source code)
+bin/
+dist/
+build/
+/tmp/
+
+# Certificates (will be mounted or generated)
+certs/
+*.key
+*.crt
+*.pem

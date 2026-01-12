@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  server:
+    container_name: sk-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server
+    ports:
+      - "${SERVER_EXTERNAL_PORT}:${SERVER_INTERNAL_PORT}"
+    environment:                  
+      CONFIG_PATH: ${SERVER_CONFIG_PATH}
+    volumes:
+      - ./cmd/server/.env:/root/.env:ro
+      - ./certs:/app/certs:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  client:
+    container_name: sk-client
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: client
+    environment:                
+      CONFIG_PATH: ${CLIENT_CONFIG_PATH}
+    volumes:
+      - ./cmd/client/.env:/root/.env:ro
+      - ./certs:/root/certs:ro
+
+  db:
+    image: postgres:16-alpine
+    container_name: sk-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_EXTERNAL_PORT}:${POSTGRES_INTERNAL_PORT}"
+    volumes:
+      - pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: ${POSTGRES_HEALTHCHECK_INTERVAL}
+      timeout: ${POSTGRES_HEALTHCHECK_TIMEOUT}
+      retries: ${POSTGRES_HEALTHCHECK_RETRIES}
+
+  minio:
+    image: minio/minio:latest
+    container_name: sk-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - "${MINIO_EXTERNAL_PORT}:${MINIO_INTERNAL_PORT}"
+      - "${MINIO_CONSOLE_EXTERNAL_PORT}:${MINIO_CONSOLE_INTERNAL_PORT}"
+    volumes:
+      - minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${MINIO_INTERNAL_PORT}/minio/health/live"]
+      interval: ${MINIO_HEALTHCHECK_INTERVAL}
+      timeout: ${MINIO_HEALTHCHECK_TIMEOUT}
+      retries: ${MINIO_HEALTHCHECK_RETRIES}
+
+volumes:
+  pg:
+  minio:
